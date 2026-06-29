@@ -96,3 +96,43 @@ async def get_external_data(urls: list[str]):
     print("END:", time.time())
     return {"results": result}
 
+#returns a simple JSON response indicating the app is working
+@app.get("/health")
+async def health_check():
+    return {"status": "working"}
+
+#returns the version of the application and its name. This endpoint can be useful for monitoring and debugging purposes, as it allows clients to check the version of the application they are interacting with.
+@app.get("/version")
+async def get_version():
+    return {
+        "version": "1.0.1",
+        "app": "fastapi-project"
+    }
+
+#LLM
+@app.post("/llm")
+async def llm_endpoint(prompt: str):
+    # fake LLM for now
+    return {
+        "input": prompt,
+        "output": f"LLM response: {prompt}"
+    }
+
+'''
+app.post("/llm")
+async def call_llm(prompt: str):
+    async with httpx.AsyncClient(verify=False) as client:
+        response = await client.post(
+            "https://api.openai.com/v1/chat/completions",
+            json={
+                "model": "gpt-3.5-turbo",
+                "messages": [{"role": "user", "content": prompt}]
+            },
+            headers={
+                "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')
+            }
+        )
+
+        data = response.json()
+        return data
+'''
