@@ -1,3 +1,5 @@
+from time import time
+
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Depends
 from app.schemas import PostCreate,PostResponse
 from app.data import Post, create_db_and_tables, get_async_session
@@ -10,7 +12,16 @@ import shutil
 import os
 import uuid
 import tempfile
+from app.services.api_client_1 import fetch_all
+from app.services.imagekit_service import upload_with_retry
+import time
+import logging
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 @asynccontextmanager
 async def life_span(app: FastAPI):
@@ -35,12 +46,7 @@ async def upload_file(file: UploadFile = File(...),
         
 
         with open(temp_file_path, "rb") as f:
-            upload_result = imagekit.upload_file({
-                "file": f,
-                "file_name": file.filename,
-                "use_unique_file_name": True,
-                "tags": ["backend-upload"]
-            })
+            upload_result = await upload_with_retry(f, file.filename)
 
 
         
@@ -82,4 +88,11 @@ async def get_feed(session: AsyncSession = Depends(get_async_session)):
             }
         )
     return {"posts":posts_data}
+
+@app.post("/external-data")
+async def get_external_data(urls: list[str]):
+    print("START:", time.time())
+    result = await fetch_all(urls)
+    print("END:", time.time())
+    return {"results": result}
 
